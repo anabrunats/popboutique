@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Pop Boutique</title>
+    <style>
+        /* Um estilo rápido para não ficar bagunçado */
+        #chat-container { max-width: 500px; margin: 20px auto; border: 1px solid #ccc; padding: 15px; border-radius: 10px; font-family: sans-serif; }
+        #chatlog { height: 300px; overflow-y: auto; border-bottom: 1px solid #eee; margin-bottom: 10px; padding: 10px; background: #f9f9f9; }
+        .user { text-align: right; color: #2b5a83; }
+        .bot { text-align: left; color: #333; }
+        img { max-width: 150px; border-radius: 5px; margin-top: 5px; }
+        input[type="text"] { width: 70%; padding: 8px; }
+    </style>
+</head>
+<body>  
+    <main class="tela-principal">
+        
+     <nav class="menu">
+        <a href="index.html">Início</a>
+        <a href="final.html">Sobre</a>
+    </nav>
+
+    <!-- INTERFACE DO CHAT -->
+    <div id="chat-container">
+        <h3>Assistente de Moda - Pop Boutique</h3>
+        <div id="chatlog"></div>
+        
+        <div class="inputs">
+            <!-- Botão de anexo de imagem -->
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('imageInput').click()">📷</button>
+            
+            <input type="text" id="userInput" placeholder="Pergunte sobre uma peça...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <!-- LÓGICA DO CHAT -->
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const imageField = document.getElementById('imageInput');
+            const chatlog = document.getElementById('chatlog');
+            
+            const message = inputField.value;
+            const imageFile = imageField.files[0];
+
+            if (!message && !imageFile) return;
+
+            // Mostrar o que o usuário enviou na tela
+            if (message) chatlog.innerHTML += `<p class="user"><b>Você:</b> ${message}</p>`;
+            if (imageFile) {
+                const imageUrl = URL.createObjectURL(imageFile);
+                chatlog.innerHTML += `<p class="user"><b>Imagem:</b><br><img src="${imageUrl}"></p>`;
+            }
+
+            // Preparar para enviar ao Python (Flask)
+            const formData = new FormData();
+            formData.append('message', message);
+            if (imageFile) formData.append('image', imageFile);
+
+            try {
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                chatlog.innerHTML += `<p class="bot"><b>IA:</b> ${data.reply}</p>`;
+                chatlog.scrollTop = chatlog.scrollHeight;
+            } catch (error) {
+                chatlog.innerHTML += `<p style="color:red">Erro: Ligue o servidor Python!</p>`;
+            }
+
+            // Limpar campos
+            inputField.value = '';
+            imageField.value = '';
+        }
+    </script>
+    </main>
+
+    <footer class="rodape-login">
+    <p>&copy; 2026 Pop Boutique - Projeto Acadêmico</p> 
+    </footer>
+</body>
+</html>
